@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>✨ Solver Matriz Rosa ✨</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+:root {
+    --bg-pastel-1: #ffd6eb;
+    --bg-pastel-2: #ffc2e2;
+    --card: #fff0f7;
+    --pink: #ff4fa3;
+    --pink-dark: #d63384;
+    --text: #5a2a46;
+    --error: #ff3366;
+}
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Poppins', sans-serif;
+    background:linear-gradient(135deg,var(--bg-pastel-1),var(--bg-pastel-2));
+    color:var(--text);
+    text-align:center;
+    padding:20px;
+    margin:0;
+    min-height:100vh;
+    position:relative;
+    overflow-x:hidden;
+}
+
+/* LLUVIA DE NÚMEROS */
+#lluvia-numeros{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:0;
+}
+
+.numero{
+    position:absolute;
+    top:-50px;
+    color:var(--pink);
+    font-size:25px;
+    font-weight:bold;
+    animation:caer linear infinite;
+    opacity:0.7;
+    text-shadow:0 0 10px rgba(255,79,163,0.6);
+}
+
+@keyframes caer{
+    0%{
+        transform:translateY(-10vh) rotate(0deg);
+        opacity:0;
+    }
+    10%{
+        opacity:0.8;
+    }
+    100%{
+        transform:translateY(110vh) rotate(360deg);
+        opacity:0;
+    }
+}
+
+h1{
+    margin-bottom:20px;
+    color:var(--pink-dark);
+    font-size:2.2rem;
+    font-weight:700;
+    text-shadow:0 3px 8px rgba(255,79,163,0.3);
+    position:relative;
+    z-index:1;
+}
+
+.matriz{
+    display:inline-block;
+    padding:25px;
+    background:rgba(255,255,255,0.65);
+    border-radius:25px;
+    box-shadow:0 8px 30px rgba(255,79,163,0.2);
+    border:2px solid #ffb3d9;
+    position:relative;
+    z-index:1;
+    backdrop-filter:blur(8px);
+}
+
+.fila{
+    margin:10px;
+}
+
+input{
+    width:70px;
+    height:45px;
+    font-size:18px;
+    font-family:'Poppins', sans-serif;
+    text-align:center;
+    margin:3px;
+    border:2px solid #ffb3d9;
+    border-radius:12px;
+    background:#fff;
+    color:var(--text);
+    outline:none;
+    transition:all 0.25s;
+}
+
+input:focus{
+    border-color:var(--pink);
+    box-shadow:0 0 15px rgba(255,79,163,0.5);
+    transform:scale(1.08);
+}
+
+input::placeholder{
+    color:#d67ba8;
+    opacity:0.7;
+}
+
+button{
+    margin-top:20px;
+    width:260px;
+    height:55px;
+    font-size:20px;
+    font-family:'Poppins', sans-serif;
+    border:none;
+    border-radius:16px;
+    background:linear-gradient(135deg,var(--pink),var(--pink-dark));
+    color:white;
+    cursor:pointer;
+    font-weight:600;
+    transition:all 0.3s;
+    box-shadow:0 5px 20px rgba(255,79,163,0.35);
+}
+
+button:hover{
+    transform:translateY(-3px) scale(1.02);
+    box-shadow:0 8px 25px rgba(255,79,163,0.45);
+}
+
+button:active{
+    transform:translateY(0px);
+}
+
+#resultado{
+    margin:30px auto 0;
+    max-width:650px;
+    background:rgba(255,255,255,0.65);
+    padding:25px;
+    border-radius:20px;
+    text-align:left;
+    white-space:pre-wrap;
+    overflow:auto;
+    font-family:'Courier New', monospace;
+    border:2px solid #ffb3d9;
+    box-shadow:0 8px 25px rgba(255,79,163,0.2);
+    position:relative;
+    z-index:1;
+    backdrop-filter:blur(6px);
+}
+
+.error{
+    color:var(--error);
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LLUVIA DE NÚMEROS -->
+<div id="lluvia-numeros"></div>
+
+<h1>✨ Resolver Matriz 3x4 ✨</h1>
+
+<div class="matriz">
+
+    <!-- FILA 1 -->
+    <div class="fila">
+        <input id="e11" type="text" placeholder="a11">
+        <input id="e12" type="text" placeholder="a12">
+        <input id="e13" type="text" placeholder="a13">
+        <input id="e14" type="text" placeholder="R1">
+    </div>
+
+    <!-- FILA 2 -->
+    <div class="fila">
+        <input id="e21" type="text" placeholder="a21">
+        <input id="e22" type="text" placeholder="a22">
+        <input id="e23" type="text" placeholder="a23">
+        <input id="e24" type="text" placeholder="R2">
+    </div>
+
+    <!-- FILA 3 -->
+    <div class="fila">
+        <input id="e31" type="text" placeholder="a31">
+        <input id="e32" type="text" placeholder="a32">
+        <input id="e33" type="text" placeholder="a33">
+        <input id="e34" type="text" placeholder="R3">
+    </div>
+
+    <button onclick="resolver()">Resolver Matriz ✨</button>
+</div>
+
+<div id="resultado"></div>
+
+<script>
+
+/* LLUVIA DE NÚMEROS */
+const contenedor = document.getElementById("lluvia-numeros");
+
+function crearNumero(){
+    const numero = document.createElement("div");
+
+    numero.classList.add("numero");
+
+    numero.innerHTML = Math.floor(Math.random() * 10);
+
+    numero.style.left = Math.random() * 100 + "vw";
+
+    numero.style.fontSize = (18 + Math.random() * 25) + "px";
+
+    numero.style.animationDuration = (4 + Math.random() * 6) + "s";
+
+    contenedor.appendChild(numero);
+
+    setTimeout(()=>{
+        numero.remove();
+    },10000);
+}
+
+setInterval(crearNumero,400);
+
+
+/* CLASE DE FRACCIONES */
+class Fraccion{
+
+    constructor(num, den = 1){
+
+        if(typeof num === 'string'){
+
+            if(num.includes('/')){
+
+                let partes = num.split('/');
+
+                num = parseInt(partes[0]);
+                den = parseInt(partes[1]);
+
+            }else{
+
+                num = parseFloat(num);
+
+                if(isNaN(num)) num = 0;
+
+                let decimales = (num.toString().split('.')[1] || '').length;
+
+                den = Math.pow(10, decimales);
+
+                num = Math.round(num * den);
+            }
+        }
+
+        if(den === 0) throw new Error("Denominador cero");
+
+        if(den < 0){
+            num = -num;
+            den = -den;
+        }
+
+        let mcd = this.mcd(Math.abs(num), Math.abs(den));
+
+        this.num = num / mcd;
+        this.den = den / mcd;
+    }
+
+    mcd(a,b){
+        return b === 0 ? a : this.mcd(b, a % b);
+    }
+
+    sumar(otra){
+        return new Fraccion(
+            this.num * otra.den + otra.num * this.den,
+            this.den * otra.den
+        );
+    }
+
+    restar(otra){
+        return new Fraccion(
+            this.num * otra.den - otra.num * this.den,
+            this.den * otra.den
+        );
+    }
+
+    multiplicar(otra){
+        return new Fraccion(
+            this.num * otra.num,
+            this.den * otra.den
+        );
+    }
+
+    dividir(otra){
+
+        if(otra.num === 0){
+            throw new Error("División por cero");
+        }
+
+        return new Fraccion(
+            this.num * otra.den,
+            this.den * otra.num
+        );
+    }
+
+    esCero(){
+        return this.num === 0;
+    }
+
+    toString(){
+
+        if(this.den === 1){
+            return this.num.toString();
+        }
+
+        if(this.num === 0){
+            return "0";
+        }
+
+        return this.num + "/" + this.den;
+    }
+}
+
+
+/* RESOLVER MATRIZ */
+function resolver(){
+
+    try{
+
+        let m = [
+
+            [
+                new Fraccion(document.getElementById("e11").value || "0"),
+                new Fraccion(document.getElementById("e12").value || "0"),
+                new Fraccion(document.getElementById("e13").value || "0"),
+                new Fraccion(document.getElementById("e14").value || "0")
+            ],
+
+            [
+                new Fraccion(document.getElementById("e21").value || "0"),
+                new Fraccion(document.getElementById("e22").value || "0"),
+                new Fraccion(document.getElementById("e23").value || "0"),
+                new Fraccion(document.getElementById("e24").value || "0")
+            ],
+
+            [
+                new Fraccion(document.getElementById("e31").value || "0"),
+                new Fraccion(document.getElementById("e32").value || "0"),
+                new Fraccion(document.getElementById("e33").value || "0"),
+                new Fraccion(document.getElementById("e34").value || "0")
+            ]
+        ];
+
+        let pasos = "✨ MATRIZ INICIAL ✨\n";
+
+        pasos += mostrarMatriz(m);
+
+        /* MÉTODO GAUSS-JORDAN */
+        for(let i = 0; i < 3; i++){
+
+            if(m[i][i].esCero()){
+
+                let cambio = false;
+
+                for(let k = i + 1; k < 3; k++){
+
+                    if(!m[k][i].esCero()){
+
+                        [m[i], m[k]] = [m[k], m[i]];
+
+                        pasos += `\nIntercambiar R${i+1} ↔ R${k+1}\n`;
+
+                        pasos += mostrarMatriz(m);
+
+                        cambio = true;
+
+                        break;
+                    }
+                }
+
+                if(!cambio){
+
+                    document.getElementById("resultado").innerHTML =
+                    `<span class="error">
+                    Sistema sin solución única.
+                    Pivote cero en columna ${i+1}
+                    </span>`;
+
+                    return;
+                }
+            }
+
+            let pivote = m[i][i];
+
+            if(pivote.num !== pivote.den){
+
+                for(let j = 0; j < 4; j++){
+
+                    m[i][j] = m[i][j].dividir(pivote);
+                }
+
+                pasos += `\nR${i+1} = R${i+1} / (${pivote.toString()})\n`;
+
+                pasos += mostrarMatriz(m);
+            }
+
+            for(let k = 0; k < 3; k++){
+
+                if(k !== i && !m[k][i].esCero()){
+
+                    let factor = m[k][i];
+
+                    for(let j = 0; j < 4; j++){
+
+                        m[k][j] = m[k][j].restar(
+                            factor.multiplicar(m[i][j])
+                        );
+                    }
+
+                    pasos += `\nR${k+1} = R${k+1} - (${factor.toString()})R${i+1}\n`;
+
+                    pasos += mostrarMatriz(m);
+                }
+            }
+        }
+
+        pasos += "\n✨ SOLUCIÓN FINAL ✨\n";
+
+        pasos += "x = " + m[0][3].toString() + "\n";
+        pasos += "y = " + m[1][3].toString() + "\n";
+        pasos += "z = " + m[2][3].toString() + "\n";
+
+        document.getElementById("resultado").innerText = pasos;
+
+    }catch(error){
+
+        document.getElementById("resultado").innerHTML =
+        `<span class="error">Error: ${error.message}</span>`;
+    }
+}
+
+
+/* MOSTRAR MATRIZ */
+function mostrarMatriz(m){
+
+    let texto = "";
+
+    for(let i = 0; i < 3; i++){
+
+        texto += "| ";
+
+        for(let j = 0; j < 4; j++){
+
+            texto += m[i][j].toString().padEnd(8) + " ";
+        }
+
+        texto += "|\n";
+    }
+
+    return texto;
+}
+
+</script>
+
+</body>
+</html>
